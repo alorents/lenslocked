@@ -3,6 +3,9 @@ package main
 import (
 	"fmt"
 	"net/http"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 )
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
@@ -26,34 +29,27 @@ func faqHandler(w http.ResponseWriter, r *http.Request) {
 		"</p>")
 }
 
-//func pathHandler(w http.ResponseWriter, r *http.Request) {
-//	switch r.URL.Path {
-//	case "/":
-//		homeHandler(w, r)
-//	case "/contact":
-//		contactHandler(w, r)
-//	default:
-//		http.Error(w, "Page not found", http.StatusNotFound)
-//	}
-//}
+func userHandler(w http.ResponseWriter, r *http.Request) {
+	userID := chi.URLParam(r, "userID")
 
-type Router struct{}
-
-func (router Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	switch r.URL.Path {
-	case "/":
-		homeHandler(w, r)
-	case "/contact":
-		contactHandler(w, r)
-	case "/faq":
-		faqHandler(w, r)
-	default:
-		http.Error(w, "Page not found", http.StatusNotFound)
-	}
+	w.Write([]byte(fmt.Sprintf("<h1>User Page</h1><p>User: %s</p>", userID)))
 }
 
 func main() {
-	var router Router
+	router := chi.NewRouter()
+	router.Use(middleware.Logger)
+	router.Get("/", homeHandler)
+	router.Get("/contact", contactHandler)
+	router.Get("/faq", faqHandler)
+	router.Route("/users/{userID}", func(router chi.Router) {
+		router.Use(middleware.RequestID)
+		router.Use(middleware.RealIP)
+		router.Use(middleware.Logger)
+		router.Get("/", userHandler)
+	})
+	router.NotFound(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "Page not found", http.StatusNotFound)
+	})
 	fmt.Println("Starting the server on :3000...")
 	http.ListenAndServe(":3000", router)
 }
