@@ -35,14 +35,8 @@ func contactHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func faqHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	fmt.Fprint(w, "<h1>FAQ Page</h1>"+
-		"<p>"+
-		"Q: Why does this exist?</br>"+
-		"A: To learn WebDev stuff!</br></br>"+
-		"Q: How do we contact you?</br>"+
-		"A: See the <a href=\"/contact\">contact us</a> page</br></br>"+
-		"</p>")
+	executeTemplate(w, "templates/faq.gohtml")
+
 }
 
 func userHandler(w http.ResponseWriter, r *http.Request) {
