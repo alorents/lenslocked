@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 )
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
@@ -28,11 +29,24 @@ func faqHandler(w http.ResponseWriter, r *http.Request) {
 		"</p>")
 }
 
+func userHandler(w http.ResponseWriter, r *http.Request) {
+	userID := chi.URLParam(r, "userID")
+
+	w.Write([]byte(fmt.Sprintf("<h1>User Page</h1><p>User: %s</p>", userID)))
+}
+
 func main() {
 	router := chi.NewRouter()
+	router.Use(middleware.Logger)
 	router.Get("/", homeHandler)
 	router.Get("/contact", contactHandler)
 	router.Get("/faq", faqHandler)
+	router.Route("/users/{userID}", func(router chi.Router) {
+		router.Use(middleware.RequestID)
+		router.Use(middleware.RealIP)
+		router.Use(middleware.Logger)
+		router.Get("/", userHandler)
+	})
 	router.NotFound(func(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Page not found", http.StatusNotFound)
 	})
