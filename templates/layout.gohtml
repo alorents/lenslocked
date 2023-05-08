@@ -30,6 +30,30 @@
             </nav>
         </header>
         {{template "page" .}}
-        <div><p>footer</p></div>
+        <footer
+                class="bg-neutral-200 text-center dark:bg-neutral-700 lg:text-left">
+            <div class="p-4 text-center text-neutral-700 dark:text-neutral-200">
+            <nav class="px-8 py-6 flex items-center space-x-12">
+                <div class="text-4xl font-serif">Lenslocked</div>
+                <div class="flex-grow">
+                    <a class="text-lg font-semibold hover:text-blue-100 pr-8" href="/">
+                        Home
+                    </a>
+                    <a class="text-lg font-semibold hover:text-blue-100 pr-8" href="/contact">
+                        Contact
+                    </a>
+                    <a class="text-lg font-semibold hover:text-blue-100 pr-8" href="/faq">
+                        FAQ
+                    </a>
+                </div>
+                <div class="space-x-4">
+                    <a href="#">Sign in</a>
+                    <a href="#" class="px-4 py-2 bg-blue-700 hover:bg-blue-600 rounded">
+                        Sign up
+                    </a>
+                </div>
+            </nav>
+            </div>
+        </footer>
     </body>
 </html>
