@@ -59,16 +59,61 @@ func main() {
 	}
 	fmt.Println("Tables created.")
 
-	// Insert data
-	name := "Andreas Lorentson"
-	email := "andreasphoenix@gmail.com"
-	row := db.QueryRow(`
-	  INSERT INTO users (name, email)
-	  VALUES ($1, $2) RETURNING id;`, name, email)
-	var id int
-	err = row.Scan(&id)
+	//// Insert data
+	//name := "Dray Lorentson"
+	//email := "andreas.lorentson@gmail.com"
+	//row := db.QueryRow(`
+	//  INSERT INTO users (name, email)
+	//  VALUES ($1, $2) RETURNING id;`, name, email)
+	//var id int
+	//err = row.Scan(&id)
+	//if err != nil {
+	//	panic(err)
+	//}
+	//fmt.Println("User created. id =", id)
+	//
+	//userID := id
+	//for i := 1; i <= 5; i++ {
+	//	amount := i * 100
+	//	desc := fmt.Sprintf("Fake order #%d", i)
+	//	_, err := db.Exec(`
+	//INSERT INTO orders(user_id, amount, description)
+	//VALUES($1, $2, $3)`, userID, amount, desc)
+	//	if err != nil {
+	//		panic(err)
+	//	}
+	//}
+	//fmt.Println("Created fake orders.")
+
+	type Order struct {
+		ID          int
+		UserID      int
+		Amount      int
+		Description string
+	}
+	var orders []Order
+
+	userID := 1 // Use the same ID you used in the previous lesson
+	rows, err := db.Query(`
+		SELECT id, amount, description
+		FROM orders
+		WHERE user_id=$1`, userID)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("User created. id =", id)
+	defer rows.Close()
+	for rows.Next() {
+		var order Order
+		order.UserID = userID
+		err := rows.Scan(&order.ID, &order.Amount, &order.Description)
+		if err != nil {
+			panic(err)
+		}
+		orders = append(orders, order)
+	}
+	err = rows.Err()
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("Orders:", orders)
 }
