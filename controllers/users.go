@@ -7,22 +7,38 @@ import (
 	"github.com/alorents/lenslocked/models"
 )
 
-type Users struct {
+type UsersController struct {
 	Templates struct {
-		New Template
+		New    Template
+		SignIn Template
 	}
 	UserService *models.UserService
 }
 
-func (u Users) New(w http.ResponseWriter, r *http.Request) {
+func (c UsersController) New(w http.ResponseWriter, r *http.Request) {
 	var data struct {
 		Email string
 	}
 	data.Email = r.FormValue("email")
-	u.Templates.New.Execute(w, data)
+	c.Templates.New.Execute(w, data)
 }
 
-func (u Users) Create(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, "Email: ", r.FormValue("email"))
-	fmt.Fprint(w, "Password: ", r.FormValue("password"))
+func (c UsersController) Create(w http.ResponseWriter, r *http.Request) {
+	email := r.FormValue("email")
+	password := r.FormValue("password")
+	user, err := c.UserService.Create(email, password)
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, "Unexpepcted error", http.StatusInternalServerError)
+		return
+	}
+	fmt.Fprintf(w, "Created user %v", *user)
+}
+
+func (c UsersController) SignIn(w http.ResponseWriter, r *http.Request) {
+	var data struct {
+		Email string
+	}
+	data.Email = r.FormValue("email")
+	c.Templates.SignIn.Execute(w, data)
 }
