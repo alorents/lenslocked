@@ -40,6 +40,7 @@ func main() {
 	router.Post("/users", usersC.Create)
 	usersC.Templates.SignIn = views.Must(views.ParseFS(templates.FS, "layout.gohtml", "signin.gohtml"))
 	router.Get("/signin", usersC.SignIn)
+	router.Post("/signin", usersC.ProcessSignin)
 
 	router.NotFound(func(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Page not found", http.StatusNotFound)
