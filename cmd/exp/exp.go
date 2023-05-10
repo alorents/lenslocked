@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
 
 	_ "github.com/jackc/pgx/v4/stdlib"
@@ -23,15 +22,8 @@ func (cfg PostgresConfig) String() string {
 }
 
 func main() {
-	postgresConfig := PostgresConfig{
-		Host:     "localhost",
-		Port:     "5432",
-		User:     "baloo",
-		Password: "junglebook",
-		DBName:   "lenslocked",
-		SSLMode:  "disable",
-	}
-	db, err := sql.Open("pgx", postgresConfig.String())
+	postgresConfig := models.DefaultPostgresConfig()
+	db, err := models.Open(postgresConfig)
 	if err != nil {
 		panic(err)
 	}
@@ -66,7 +58,7 @@ func main() {
 	//fmt.Println("Tables created.")
 
 	// Create fake users
-	startIdx := 0
+	startIdx := 42
 	for i := startIdx; i <= startIdx+5; i++ {
 		email := fmt.Sprintf("email_%d", i)
 		password := fmt.Sprintf("password_%d", i)
