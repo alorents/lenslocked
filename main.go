@@ -34,11 +34,18 @@ func main() {
 	}
 	defer db.Close()
 
-	us := models.UserService{
+	// Create the services
+	userService := models.UserService{
 		DB: db,
 	}
+	sessionService := models.SessionService{
+		DB: db,
+	}
+
+	// Create the controllers
 	usersC := controllers.UsersController{
-		UserService: &us,
+		UserService:    &userService,
+		SessionService: &sessionService,
 	}
 	usersC.Templates.New = views.Must(views.ParseFS(templates.FS, "layout.gohtml", "signup.gohtml"))
 	router.Get("/signup", usersC.New)
@@ -46,6 +53,8 @@ func main() {
 	usersC.Templates.SignIn = views.Must(views.ParseFS(templates.FS, "layout.gohtml", "signin.gohtml"))
 	router.Get("/signin", usersC.SignIn)
 	router.Post("/signin", usersC.ProcessSignin)
+	router.Post("/signout", usersC.ProcessSignOut)
+	usersC.Templates.Profile = views.Must(views.ParseFS(templates.FS, "layout.gohtml", "profile.gohtml"))
 	router.Get("/users/me", usersC.CurrentUser)
 
 	router.NotFound(func(w http.ResponseWriter, r *http.Request) {
