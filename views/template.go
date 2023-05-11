@@ -1,8 +1,10 @@
 package views
 
 import (
+	"bytes"
 	"fmt"
 	"html/template"
+	"io"
 	"io/fs"
 	"log"
 	"net/http"
@@ -27,8 +29,8 @@ func ParseFS(fs fs.FS, patterns ...string) (Template, error) {
 	htmlTpl.Funcs(template.FuncMap{
 		// returns a placeholder CSRF field - this will be replaced when the template is executed
 		// using the placeholder allows us to parse the template when the application starts
-		"csrfField": func() template.HTML {
-			return `<input class="hidden">"placeholder CSRF Field"</input>`
+		"csrfField": func() (template.HTML, error) {
+			return "", fmt.Errorf("csrfField called but not implemented")
 		},
 	})
 
@@ -57,10 +59,12 @@ func (t Template) Execute(w http.ResponseWriter, r *http.Request, data interface
 	})
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	err = t.htmlTpl.Execute(w, data)
+	var buffer bytes.Buffer
+	err = t.htmlTpl.Execute(&buffer, data)
 	if err != nil {
 		log.Printf("error executing template: %v", err)
-		http.Error(w, "There was an error parsing the template.", http.StatusInternalServerError)
+		http.Error(w, "There was an error rendering the page.", http.StatusInternalServerError)
 		return
 	}
+	io.Copy(w, &buffer)
 }
