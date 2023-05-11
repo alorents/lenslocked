@@ -15,7 +15,7 @@ func Bytes(n int) ([]byte, error) {
 	if nRead != n {
 		return nil, fmt.Errorf("bytes: read %d bytes, expected %d", nRead, n)
 	}
-	return nil, nil
+	return b, nil
 }
 
 // String returns a base64 encoded string of n random bytes, or an error if there was one.

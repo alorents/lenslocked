@@ -34,6 +34,7 @@ type SessionService struct {
 }
 
 func (s *SessionService) Create(userID int) (*Session, error) {
+	// create a new session token
 	bytesPerToken := s.BytesPerToken
 	if bytesPerToken < MinBytesPerToken {
 		bytesPerToken = MinBytesPerToken
@@ -47,7 +48,17 @@ func (s *SessionService) Create(userID int) (*Session, error) {
 		Token:     token,
 		TokenHash: s.hash(token),
 	}
-	// TODO Implement SessionService.Create
+
+	// store the session token hash in the DB
+	row := s.DB.QueryRow(`
+		INSERT INTO sessions (user_id, token_hash)
+		VALUES ($1, $2)
+		RETURNING id;`, session.UserID, session.TokenHash)
+	err = row.Scan(&session.ID)
+	if err != nil {
+		return nil, fmt.Errorf("create: %w", err)
+	}
+
 	return &session, nil
 }
 
