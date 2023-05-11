@@ -33,9 +33,9 @@ type SessionService struct {
 	BytesPerToken int
 }
 
-func (s *SessionService) Create(userID int) (*Session, error) {
+func (ss *SessionService) Create(userID int) (*Session, error) {
 	// create a new session token
-	bytesPerToken := s.BytesPerToken
+	bytesPerToken := ss.BytesPerToken
 	if bytesPerToken < MinBytesPerToken {
 		bytesPerToken = MinBytesPerToken
 	}
@@ -46,15 +46,24 @@ func (s *SessionService) Create(userID int) (*Session, error) {
 	session := Session{
 		UserID:    userID,
 		Token:     token,
-		TokenHash: s.hash(token),
+		TokenHash: ss.hash(token),
 	}
 
 	// store the session token hash in the DB
-	row := s.DB.QueryRow(`
+	row := ss.DB.QueryRow(`
+	UPDATE sessions
+	SET token_hash = $2
+	WHERE user_id = $1
+	RETURNING id;`, session.UserID, session.TokenHash)
+	err = row.Scan(&session.ID)
+	if err == sql.ErrNoRows {
+		// no existing session for this user
+		row = ss.DB.QueryRow(`
 		INSERT INTO sessions (user_id, token_hash)
 		VALUES ($1, $2)
 		RETURNING id;`, session.UserID, session.TokenHash)
-	err = row.Scan(&session.ID)
+		err = row.Scan(&session.ID)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("create: %w", err)
 	}
@@ -62,12 +71,39 @@ func (s *SessionService) Create(userID int) (*Session, error) {
 	return &session, nil
 }
 
-func (s *SessionService) User(token string) (*User, error) {
-	// TODO Implement SessionService.User
-	return nil, nil
+func (ss *SessionService) User(token string) (*User, error) {
+	// Hash the session token
+	tokenHash := ss.hash(token)
+	// Query for the session with that hash
+	var user User
+	row := ss.DB.QueryRow(`
+	SELECT user_id FROM sessions WHERE token_hash = $1;`, tokenHash)
+	err := row.Scan(&user.ID)
+	if err != nil {
+		return nil, fmt.Errorf("user: %w", err)
+	}
+	// Using the UserID from the session we need to query for that user
+	row = ss.DB.QueryRow(`
+	SELECT email, password_hash FROM users WHERE id = $1;`, user.ID)
+	err = row.Scan(&user.Email, &user.PasswordHash)
+	if err != nil {
+		return nil, fmt.Errorf("user: %w", err)
+	}
+	// return the user
+	return &user, nil
 }
 
-func (s *SessionService) hash(token string) string {
+func (ss *SessionService) DeleteByToken(token string) error {
+	tokenHash := ss.hash(token)
+	_, err := ss.DB.Exec(`
+	DELETE FROM sessions WHERE token_hash = $1;`, tokenHash)
+	if err != nil {
+		return fmt.Errorf("delete: %w", err)
+	}
+	return nil
+}
+
+func (ss *SessionService) hash(token string) string {
 	tokenHash := sha256.Sum256([]byte(token))
 	return base64.URLEncoding.EncodeToString(tokenHash[:])
 }

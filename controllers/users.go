@@ -78,7 +78,8 @@ func (c UsersController) ProcessSignin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	setCookie(w, CookeSession, session.Token)
-	fmt.Fprintf(w, "User authenticated: %+v", user)
+	http.Redirect(w, r, "/users/me", http.StatusFound)
+	return
 }
 
 func (c UsersController) CurrentUser(w http.ResponseWriter, r *http.Request) {
