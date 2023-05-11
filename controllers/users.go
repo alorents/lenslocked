@@ -46,12 +46,7 @@ func (c UsersController) Create(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/signin", http.StatusFound)
 		return
 	}
-	http.SetCookie(w, &http.Cookie{
-		Name:     "session",
-		Value:    session.Token,
-		Path:     "/",
-		HttpOnly: true,
-	})
+	setCookie(w, CookeSession, session.Token)
 	http.Redirect(w, r, "/users/me", http.StatusFound)
 }
 
@@ -82,17 +77,12 @@ func (c UsersController) ProcessSignin(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Unexpepcted error", http.StatusInternalServerError)
 		return
 	}
-	http.SetCookie(w, &http.Cookie{
-		Name:     "session",
-		Value:    session.Token,
-		Path:     "/",
-		HttpOnly: true,
-	})
+	setCookie(w, CookeSession, session.Token)
 	fmt.Fprintf(w, "User authenticated: %+v", user)
 }
 
 func (c UsersController) CurrentUser(w http.ResponseWriter, r *http.Request) {
-	tokenCookie, err := r.Cookie("session")
+	tokenCookie, err := readCooke(r, CookeSession)
 	if err != nil || tokenCookie.Value == "" {
 		fmt.Println(err)
 		http.Redirect(w, r, "/signin", http.StatusFound)
@@ -107,15 +97,4 @@ func (c UsersController) CurrentUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Fprintf(w, "Current user: %+v", user)
-}
-
-func (c UsersController) SignOut(w http.ResponseWriter, r *http.Request) {
-	cookie := http.Cookie{
-		Name:   "email",
-		Value:  "",
-		Path:   "/",
-		MaxAge: -1,
-	}
-	http.SetCookie(w, &cookie)
-	fmt.Fprintln(w, "Signed out")
 }
