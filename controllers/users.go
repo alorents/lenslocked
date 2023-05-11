@@ -12,8 +12,9 @@ import (
 
 type UsersController struct {
 	Templates struct {
-		New    Template
-		SignIn Template
+		New     Template
+		SignIn  Template
+		Profile Template
 	}
 	UserService    *models.UserService
 	SessionService *models.SessionService
@@ -116,6 +117,9 @@ func (c UsersController) CurrentUser(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/signin", http.StatusFound)
 		return
 	}
-
-	fmt.Fprintf(w, "Current user: %+v", user)
+	var data struct {
+		User *models.User
+	}
+	data.User = user
+	c.Templates.Profile.Execute(w, r, data)
 }

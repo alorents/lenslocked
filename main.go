@@ -54,6 +54,7 @@ func main() {
 	router.Get("/signin", usersC.SignIn)
 	router.Post("/signin", usersC.ProcessSignin)
 	router.Post("/signout", usersC.ProcessSignOut)
+	usersC.Templates.Profile = views.Must(views.ParseFS(templates.FS, "layout.gohtml", "profile.gohtml"))
 	router.Get("/users/me", usersC.CurrentUser)
 
 	router.NotFound(func(w http.ResponseWriter, r *http.Request) {
