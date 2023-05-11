@@ -2,24 +2,94 @@ package controllers
 
 import (
 	"fmt"
+	"html/template"
 	"net/http"
+
+	"github.com/gorilla/csrf"
+
+	"github.com/alorents/lenslocked/models"
 )
 
-type Users struct {
+type UsersController struct {
 	Templates struct {
-		New Template
+		New    Template
+		SignIn Template
 	}
+	UserService *models.UserService
 }
 
-func (u Users) New(w http.ResponseWriter, r *http.Request) {
+func (c UsersController) New(w http.ResponseWriter, r *http.Request) {
+	var data struct {
+		Email     string
+		CSRFField template.HTML
+	}
+	data.Email = r.FormValue("email")
+	data.CSRFField = csrf.TemplateField(r)
+	c.Templates.New.Execute(w, r, data)
+}
+
+func (c UsersController) Create(w http.ResponseWriter, r *http.Request) {
+	email := r.FormValue("email")
+	password := r.FormValue("password")
+	user, err := c.UserService.Create(email, password)
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, "Unexpected error", http.StatusInternalServerError)
+		return
+	}
+	fmt.Fprintf(w, "Created user %v", *user)
+}
+
+func (c UsersController) SignIn(w http.ResponseWriter, r *http.Request) {
 	var data struct {
 		Email string
 	}
 	data.Email = r.FormValue("email")
-	u.Templates.New.Execute(w, data)
+	c.Templates.SignIn.Execute(w, r, data)
 }
 
-func (u Users) Create(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, "Email: ", r.FormValue("email"))
-	fmt.Fprint(w, "Password: ", r.FormValue("password"))
+func (c UsersController) ProcessSignin(w http.ResponseWriter, r *http.Request) {
+	var data struct {
+		Email    string
+		Password string
+	}
+	data.Email = r.FormValue("email")
+	data.Password = r.FormValue("password")
+	user, err := c.UserService.Authenticate(data.Email, data.Password)
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, "Unexpepcted error", http.StatusInternalServerError)
+		return
+	}
+	cookie := http.Cookie{
+		Name:     "email",
+		Value:    user.Email,
+		HttpOnly: true,
+		Path:     "/",
+	}
+	http.SetCookie(w, &cookie)
+	fmt.Fprintf(w, "User authenticated: %+v", user)
+}
+
+func (c UsersController) CurrentUser(w http.ResponseWriter, r *http.Request) {
+	cookie, err := r.Cookie("email")
+	if err == http.ErrNoCookie || cookie.Value == "" {
+		http.Redirect(w, r, "/signin", http.StatusFound)
+		return
+	} else if err != nil {
+		http.Error(w, "Unexpepcted error", http.StatusInternalServerError)
+		return
+	}
+	fmt.Fprintf(w, "Current user: %+v", cookie)
+}
+
+func (c UsersController) SignOut(w http.ResponseWriter, r *http.Request) {
+	cookie := http.Cookie{
+		Name:   "email",
+		Value:  "",
+		Path:   "/",
+		MaxAge: -1,
+	}
+	http.SetCookie(w, &cookie)
+	fmt.Fprintln(w, "Signed out")
 }
