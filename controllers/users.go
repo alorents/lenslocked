@@ -15,7 +15,8 @@ type UsersController struct {
 		New    Template
 		SignIn Template
 	}
-	UserService *models.UserService
+	UserService    *models.UserService
+	SessionService *models.SessionService
 }
 
 func (c UsersController) New(w http.ResponseWriter, r *http.Request) {
@@ -37,7 +38,21 @@ func (c UsersController) Create(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Unexpected error", http.StatusInternalServerError)
 		return
 	}
-	fmt.Fprintf(w, "Created user %v", *user)
+
+	session, err := c.SessionService.Create(user.ID)
+	if err != nil {
+		fmt.Println(err)
+		// TODO - display error to user
+		http.Redirect(w, r, "/signin", http.StatusFound)
+		return
+	}
+	http.SetCookie(w, &http.Cookie{
+		Name:     "session",
+		Value:    session.Token,
+		Path:     "/",
+		HttpOnly: true,
+	})
+	http.Redirect(w, r, "/users/me", http.StatusFound)
 }
 
 func (c UsersController) SignIn(w http.ResponseWriter, r *http.Request) {
@@ -61,26 +76,37 @@ func (c UsersController) ProcessSignin(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Unexpepcted error", http.StatusInternalServerError)
 		return
 	}
-	cookie := http.Cookie{
-		Name:     "email",
-		Value:    user.Email,
-		HttpOnly: true,
-		Path:     "/",
+	session, err := c.SessionService.Create(user.ID)
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, "Unexpepcted error", http.StatusInternalServerError)
+		return
 	}
-	http.SetCookie(w, &cookie)
+	http.SetCookie(w, &http.Cookie{
+		Name:     "session",
+		Value:    session.Token,
+		Path:     "/",
+		HttpOnly: true,
+	})
 	fmt.Fprintf(w, "User authenticated: %+v", user)
 }
 
 func (c UsersController) CurrentUser(w http.ResponseWriter, r *http.Request) {
-	cookie, err := r.Cookie("email")
-	if err == http.ErrNoCookie || cookie.Value == "" {
+	tokenCookie, err := r.Cookie("session")
+	if err != nil || tokenCookie.Value == "" {
+		fmt.Println(err)
 		http.Redirect(w, r, "/signin", http.StatusFound)
 		return
-	} else if err != nil {
-		http.Error(w, "Unexpepcted error", http.StatusInternalServerError)
+	}
+
+	user, err := c.SessionService.User(tokenCookie.Value)
+	if err != nil {
+		fmt.Println(err)
+		http.Redirect(w, r, "/signin", http.StatusFound)
 		return
 	}
-	fmt.Fprintf(w, "Current user: %+v", cookie)
+
+	fmt.Fprintf(w, "Current user: %+v", user)
 }
 
 func (c UsersController) SignOut(w http.ResponseWriter, r *http.Request) {
