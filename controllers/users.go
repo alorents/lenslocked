@@ -25,7 +25,7 @@ func (c UsersController) New(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Email = r.FormValue("email")
 	data.CSRFField = csrf.TemplateField(r)
-	c.Templates.New.Execute(w, data)
+	c.Templates.New.Execute(w, r, data)
 }
 
 func (c UsersController) Create(w http.ResponseWriter, r *http.Request) {
@@ -45,7 +45,7 @@ func (c UsersController) SignIn(w http.ResponseWriter, r *http.Request) {
 		Email string
 	}
 	data.Email = r.FormValue("email")
-	c.Templates.SignIn.Execute(w, data)
+	c.Templates.SignIn.Execute(w, r, data)
 }
 
 func (c UsersController) ProcessSignin(w http.ResponseWriter, r *http.Request) {

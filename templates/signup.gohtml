@@ -1,7 +1,7 @@
 {{define "page"}}
 <form action="/users" method="post">
     <div class="hidden">
-        {{.CSRFField}}
+        {{csrfField}}
     </div>
     <div class="py-12 flex justify-center">
         <div class="p-8  bg-white rounded shadow">
