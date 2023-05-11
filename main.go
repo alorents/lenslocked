@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/gorilla/csrf"
 
 	"github.com/alorents/lenslocked/controllers"
 	"github.com/alorents/lenslocked/models"
@@ -16,6 +17,11 @@ import (
 func main() {
 	router := chi.NewRouter()
 	router.Use(middleware.Logger)
+
+	// TODO fix before deploying to production
+	csrfKey := "gFvi45R4fy5xNBlnEeZtQbfAVCYEIAUX"
+	csrfMW := csrf.Protect([]byte(csrfKey), csrf.Secure(false))
+	router.Use(csrfMW)
 
 	router.Get("/", controllers.StaticHandler(views.Must(views.ParseFS(templates.FS, "layout.gohtml", "home.gohtml"))))
 	router.Get("/contact", controllers.StaticHandler(views.Must(views.ParseFS(templates.FS, "layout.gohtml", "contact.gohtml"))))
