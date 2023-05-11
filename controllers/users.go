@@ -64,3 +64,23 @@ func (c UsersController) ProcessSignin(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, &cookie)
 	fmt.Fprintf(w, "User authenticated: %+v", user)
 }
+
+func (c UsersController) CurrentUser(w http.ResponseWriter, r *http.Request) {
+	cookie, err := r.Cookie("email")
+	if err != nil {
+		http.Error(w, "Unexpepcted error", http.StatusInternalServerError)
+		return
+	}
+	fmt.Fprintf(w, "Current user: %+v", cookie)
+}
+
+func (c UsersController) SignOut(w http.ResponseWriter, r *http.Request) {
+	cookie := http.Cookie{
+		Name:   "email",
+		Value:  "",
+		Path:   "/",
+		MaxAge: -1,
+	}
+	http.SetCookie(w, &cookie)
+	fmt.Fprintln(w, "Signed out")
+}
