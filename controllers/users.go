@@ -82,6 +82,26 @@ func (c UsersController) ProcessSignin(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
+func (c UsersController) ProcessSignOut(w http.ResponseWriter, r *http.Request) {
+	tokenCookie, err := readCooke(r, CookeSession)
+	if err != nil || tokenCookie.Value == "" {
+		fmt.Println(err)
+		http.Redirect(w, r, "/signin", http.StatusFound)
+		return
+	}
+
+	err = c.SessionService.DeleteByToken(tokenCookie.Value)
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, "Unexpepcted error", http.StatusInternalServerError)
+		return
+	}
+
+	deleteCookie(w, CookeSession)
+	http.Redirect(w, r, "/signin", http.StatusFound)
+	return
+}
+
 func (c UsersController) CurrentUser(w http.ResponseWriter, r *http.Request) {
 	tokenCookie, err := readCooke(r, CookeSession)
 	if err != nil || tokenCookie.Value == "" {

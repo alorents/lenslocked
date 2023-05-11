@@ -28,3 +28,9 @@ func readCooke(r *http.Request, name string) (*http.Cookie, error) {
 	}
 	return cookie, nil
 }
+
+func deleteCookie(w http.ResponseWriter, name string) {
+	cookie := newCookie(name, "")
+	cookie.MaxAge = -1
+	http.SetCookie(w, cookie)
+}
