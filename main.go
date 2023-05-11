@@ -17,7 +17,6 @@ import (
 func main() {
 	router := chi.NewRouter()
 	router.Use(middleware.Logger)
-
 	// TODO fix before deploying to production
 	csrfKey := "gFvi45R4fy5xNBlnEeZtQbfAVCYEIAUX"
 	csrfMW := csrf.Protect([]byte(csrfKey), csrf.Secure(false))

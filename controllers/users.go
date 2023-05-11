@@ -2,7 +2,10 @@ package controllers
 
 import (
 	"fmt"
+	"html/template"
 	"net/http"
+
+	"github.com/gorilla/csrf"
 
 	"github.com/alorents/lenslocked/models"
 )
@@ -17,9 +20,11 @@ type UsersController struct {
 
 func (c UsersController) New(w http.ResponseWriter, r *http.Request) {
 	var data struct {
-		Email string
+		Email     string
+		CSRFField template.HTML
 	}
 	data.Email = r.FormValue("email")
+	data.CSRFField = csrf.TemplateField(r)
 	c.Templates.New.Execute(w, data)
 }
 
