@@ -34,7 +34,7 @@ func (c UsersController) Create(w http.ResponseWriter, r *http.Request) {
 	user, err := c.UserService.Create(email, password)
 	if err != nil {
 		fmt.Println(err)
-		http.Error(w, "Unexpepcted error", http.StatusInternalServerError)
+		http.Error(w, "Unexpected error", http.StatusInternalServerError)
 		return
 	}
 	fmt.Fprintf(w, "Created user %v", *user)
@@ -73,7 +73,10 @@ func (c UsersController) ProcessSignin(w http.ResponseWriter, r *http.Request) {
 
 func (c UsersController) CurrentUser(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("email")
-	if err != nil {
+	if err == http.ErrNoCookie || cookie.Value == "" {
+		http.Redirect(w, r, "/signin", http.StatusFound)
+		return
+	} else if err != nil {
 		http.Error(w, "Unexpepcted error", http.StatusInternalServerError)
 		return
 	}

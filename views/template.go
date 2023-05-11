@@ -52,19 +52,20 @@ func (t Template) Execute(w http.ResponseWriter, r *http.Request, data interface
 		return
 	}
 
-	htmlTpl.Funcs(template.FuncMap{
-		"csrfField": func() template.HTML {
-			return csrf.TemplateField(r)
+	htmlTpl = htmlTpl.Funcs(
+		template.FuncMap{
+			"csrfField": func() template.HTML {
+				return csrf.TemplateField(r)
+			},
 		},
-	})
-
+	)
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	var buffer bytes.Buffer
-	err = t.htmlTpl.Execute(&buffer, data)
+	var buf bytes.Buffer
+	err = htmlTpl.Execute(&buf, data)
 	if err != nil {
-		log.Printf("error executing template: %v", err)
-		http.Error(w, "There was an error rendering the page.", http.StatusInternalServerError)
+		log.Printf("executing template: %v", err)
+		http.Error(w, "There was an error executing the template.", http.StatusInternalServerError)
 		return
 	}
-	io.Copy(w, &buffer)
+	io.Copy(w, &buf)
 }
