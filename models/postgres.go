@@ -3,9 +3,12 @@ package models
 import (
 	"database/sql"
 	"fmt"
+	"io/fs"
 
 	_ "github.com/jackc/pgx/v4/stdlib"
 	"github.com/pressly/goose/v3"
+
+	"github.com/alorents/lenslocked/migrations"
 )
 
 func DefaultPostgresConfig() PostgresConfig {
@@ -29,7 +32,7 @@ func Open(config PostgresConfig) (*sql.DB, error) {
 	defer db.Close()
 
 	// run migrations
-	err = Migrate(db, "./migrations")
+	err = MigrateFS(db, migrations.FS, "")
 	if err != nil {
 		panic(err)
 	}
@@ -61,4 +64,17 @@ func Migrate(db *sql.DB, dir string) error {
 		return fmt.Errorf("error running migrations: %w", err)
 	}
 	return nil
+}
+
+func MigrateFS(db *sql.DB, migrationsFS fs.FS, dir string) error {
+	// In case the dir is an empty string, they probably meant the current directory and goose wants a period for that.
+	if dir == "" {
+		dir = "."
+	}
+	goose.SetBaseFS(migrationsFS)
+	defer func() {
+		// Ensure that we remove the FS on the off chance some other part of our app uses goose for migrations and doesn't want to use our FS.
+		goose.SetBaseFS(nil)
+	}()
+	return Migrate(db, dir)
 }
