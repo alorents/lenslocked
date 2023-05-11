@@ -34,11 +34,18 @@ func main() {
 	}
 	defer db.Close()
 
-	us := models.UserService{
+	// Create the services
+	userService := models.UserService{
 		DB: db,
 	}
+	sessionService := models.SessionService{
+		DB: db,
+	}
+
+	// Create the controllers
 	usersC := controllers.UsersController{
-		UserService: &us,
+		UserService:    &userService,
+		SessionService: &sessionService,
 	}
 	usersC.Templates.New = views.Must(views.ParseFS(templates.FS, "layout.gohtml", "signup.gohtml"))
 	router.Get("/signup", usersC.New)

@@ -6,8 +6,6 @@ import (
 	"fmt"
 )
 
-const RememberTokenBytes = 32
-
 func Bytes(n int) ([]byte, error) {
 	b := make([]byte, n)
 	nRead, err := rand.Read(b)
@@ -27,9 +25,4 @@ func String(n int) (string, error) {
 		return "", fmt.Errorf("string: %w", err)
 	}
 	return base64.URLEncoding.EncodeToString(b), nil
-}
-
-// SessionToken is a helper function designed to generate a session token of a predetermined byte size.
-func SessionToken() (string, error) {
-	return String(RememberTokenBytes)
 }
