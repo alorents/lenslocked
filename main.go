@@ -67,7 +67,7 @@ func main() {
 	router.Get("/signin", usersC.SignIn)
 	router.Post("/signin", usersC.ProcessSignin)
 	router.Post("/signout", usersC.ProcessSignOut)
-	router.Route("users/me", func(router chi.Router) {
+	router.Route("/users/me", func(router chi.Router) {
 		router.Use(umw.RequireUser)
 		router.Get("/", usersC.CurrentUser)
 	})
