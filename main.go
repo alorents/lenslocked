@@ -28,6 +28,8 @@ func main() {
 	router.Get("/faq", controllers.FAQ(views.Must(views.ParseFS(templates.FS, "layout.gohtml", "faq.gohtml"))))
 
 	postgresConfig := models.DefaultPostgresConfig()
+	// TODO not prod safe
+	fmt.Println(postgresConfig)
 	db, err := models.Open(postgresConfig)
 	if err != nil {
 		panic(err)
