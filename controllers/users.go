@@ -7,6 +7,7 @@ import (
 
 	"github.com/gorilla/csrf"
 
+	"github.com/alorents/lenslocked/context"
 	"github.com/alorents/lenslocked/models"
 )
 
@@ -104,19 +105,8 @@ func (c UsersController) ProcessSignOut(w http.ResponseWriter, r *http.Request) 
 }
 
 func (c UsersController) CurrentUser(w http.ResponseWriter, r *http.Request) {
-	tokenCookie, err := readCooke(r, CookeSession)
-	if err != nil || tokenCookie.Value == "" {
-		fmt.Println(err)
-		http.Redirect(w, r, "/signin", http.StatusFound)
-		return
-	}
+	user := context.User(r.Context())
 
-	user, err := c.SessionService.User(tokenCookie.Value)
-	if err != nil {
-		fmt.Println(err)
-		http.Redirect(w, r, "/signin", http.StatusFound)
-		return
-	}
 	var data struct {
 		User *models.User
 	}

@@ -15,18 +15,6 @@ import (
 )
 
 func main() {
-	router := chi.NewRouter()
-	router.Use(middleware.Logger)
-	// TODO fix before deploying to production
-	csrfKey := "gFvi45R4fy5xNBlnEeZtQbfAVCYEIAUX"
-	csrfMW := csrf.Protect([]byte(csrfKey), csrf.Secure(false))
-	router.Use(csrfMW)
-
-	router.Get("/", controllers.StaticHandler(views.Must(views.ParseFS(templates.FS, "layout.gohtml", "home.gohtml"))))
-	router.Get("/contact", controllers.StaticHandler(views.Must(views.ParseFS(templates.FS, "layout.gohtml", "contact.gohtml"))))
-	router.Get("/signup", controllers.StaticHandler(views.Must(views.ParseFS(templates.FS, "layout.gohtml", "signup.gohtml"))))
-	router.Get("/faq", controllers.FAQ(views.Must(views.ParseFS(templates.FS, "layout.gohtml", "faq.gohtml"))))
-
 	postgresConfig := models.DefaultPostgresConfig()
 	// TODO not prod safe
 	fmt.Println(postgresConfig)
@@ -49,6 +37,26 @@ func main() {
 		UserService:    &userService,
 		SessionService: &sessionService,
 	}
+
+	// Create the router and apply middleware
+	router := chi.NewRouter()
+	router.Use(middleware.Logger)
+	// TODO fix before deploying to production
+	csrfKey := "gFvi45R4fy5xNBlnEeZtQbfAVCYEIAUX"
+	csrfMW := csrf.Protect([]byte(csrfKey), csrf.Secure(false))
+	router.Use(csrfMW)
+	umw := controllers.UserMiddleware{
+		SessionService: &sessionService,
+	}
+	router.Use(umw.SetUser)
+
+	// Define the routes
+	router.Get("/", controllers.StaticHandler(views.Must(views.ParseFS(templates.FS, "layout.gohtml", "home.gohtml"))))
+	router.Get("/contact", controllers.StaticHandler(views.Must(views.ParseFS(templates.FS, "layout.gohtml", "contact.gohtml"))))
+	router.Get("/signup", controllers.StaticHandler(views.Must(views.ParseFS(templates.FS, "layout.gohtml", "signup.gohtml"))))
+	router.Get("/faq", controllers.FAQ(views.Must(views.ParseFS(templates.FS, "layout.gohtml", "faq.gohtml"))))
+
+	// User routes
 	usersC.Templates.New = views.Must(views.ParseFS(templates.FS, "layout.gohtml", "signup.gohtml"))
 	router.Get("/signup", usersC.New)
 	router.Post("/users", usersC.Create)
