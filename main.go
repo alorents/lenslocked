@@ -15,18 +15,7 @@ import (
 )
 
 func main() {
-	router := chi.NewRouter()
-	router.Use(middleware.Logger)
-	// TODO fix before deploying to production
-	csrfKey := "gFvi45R4fy5xNBlnEeZtQbfAVCYEIAUX"
-	csrfMW := csrf.Protect([]byte(csrfKey), csrf.Secure(false))
-	router.Use(csrfMW)
-
-	router.Get("/", controllers.StaticHandler(views.Must(views.ParseFS(templates.FS, "layout.gohtml", "home.gohtml"))))
-	router.Get("/contact", controllers.StaticHandler(views.Must(views.ParseFS(templates.FS, "layout.gohtml", "contact.gohtml"))))
-	router.Get("/signup", controllers.StaticHandler(views.Must(views.ParseFS(templates.FS, "layout.gohtml", "signup.gohtml"))))
-	router.Get("/faq", controllers.FAQ(views.Must(views.ParseFS(templates.FS, "layout.gohtml", "faq.gohtml"))))
-
+	// Setup the postgres db
 	postgresConfig := models.DefaultPostgresConfig()
 	// TODO not prod safe
 	fmt.Println(postgresConfig)
@@ -36,7 +25,7 @@ func main() {
 	}
 	defer db.Close()
 
-	// Create the services
+	// Setup the services
 	userService := models.UserService{
 		DB: db,
 	}
@@ -44,25 +33,50 @@ func main() {
 		DB: db,
 	}
 
-	// Create the controllers
+	// Setup the controllers
 	usersC := controllers.UsersController{
 		UserService:    &userService,
 		SessionService: &sessionService,
 	}
 	usersC.Templates.New = views.Must(views.ParseFS(templates.FS, "layout.gohtml", "signup.gohtml"))
+	usersC.Templates.SignIn = views.Must(views.ParseFS(templates.FS, "layout.gohtml", "signin.gohtml"))
+	usersC.Templates.Profile = views.Must(views.ParseFS(templates.FS, "layout.gohtml", "profile.gohtml"))
+
+	// Setup middleware
+	csrfKey := "gFvi45R4fy5xNBlnEeZtQbfAVCYEIAUX" // TODO fix before deploying to production≈
+	csrfMW := csrf.Protect([]byte(csrfKey), csrf.Secure(false))
+	umw := controllers.UserMiddleware{
+		SessionService: &sessionService,
+	}
+
+	// Create the router and apply middleware
+	router := chi.NewRouter()
+	router.Use(middleware.Logger)
+	router.Use(csrfMW)
+	router.Use(umw.SetUser)
+
+	// Define the routes
+	router.Get("/", controllers.StaticHandler(views.Must(views.ParseFS(templates.FS, "layout.gohtml", "home.gohtml"))))
+	router.Get("/contact", controllers.StaticHandler(views.Must(views.ParseFS(templates.FS, "layout.gohtml", "contact.gohtml"))))
+	router.Get("/signup", controllers.StaticHandler(views.Must(views.ParseFS(templates.FS, "layout.gohtml", "signup.gohtml"))))
+	router.Get("/faq", controllers.FAQ(views.Must(views.ParseFS(templates.FS, "layout.gohtml", "faq.gohtml"))))
+
+	// User routes
 	router.Get("/signup", usersC.New)
 	router.Post("/users", usersC.Create)
-	usersC.Templates.SignIn = views.Must(views.ParseFS(templates.FS, "layout.gohtml", "signin.gohtml"))
 	router.Get("/signin", usersC.SignIn)
 	router.Post("/signin", usersC.ProcessSignin)
 	router.Post("/signout", usersC.ProcessSignOut)
-	usersC.Templates.Profile = views.Must(views.ParseFS(templates.FS, "layout.gohtml", "profile.gohtml"))
-	router.Get("/users/me", usersC.CurrentUser)
+	router.Route("/users/me", func(router chi.Router) {
+		router.Use(umw.RequireUser)
+		router.Get("/", usersC.CurrentUser)
+	})
 
 	router.NotFound(func(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Page not found", http.StatusNotFound)
 	})
 
+	// Start the server
 	fmt.Println("Starting the server on :3000...")
 	http.ListenAndServe(":3000", router)
 }

@@ -29,8 +29,6 @@ func Open(config PostgresConfig) (*sql.DB, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error opening database: %w", err)
 	}
-	defer db.Close()
-
 	// run migrations
 	err = MigrateFS(db, migrations.FS, "")
 	if err != nil {
