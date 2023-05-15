@@ -18,7 +18,7 @@ type UsersController struct {
 		SignIn         Template
 		Profile        Template
 		ForgotPassword Template
-		CheckEmail     Template
+		CheckYourEmail Template
 	}
 	UserService          *models.UserService
 	SessionService       *models.SessionService
@@ -152,5 +152,5 @@ func (c UsersController) ProcessForgotPassword(w http.ResponseWriter, r *http.Re
 	}
 
 	// Don't render the token to the user. We need them to verify their email address
-	c.Templates.CheckEmail.Execute(w, r, data)
+	c.Templates.CheckYourEmail.Execute(w, r, data)
 }
