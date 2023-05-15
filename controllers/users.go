@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"net/url"
 
 	"github.com/gorilla/csrf"
 
@@ -13,12 +14,16 @@ import (
 
 type UsersController struct {
 	Templates struct {
-		New     Template
-		SignIn  Template
-		Profile Template
+		New            Template
+		SignIn         Template
+		Profile        Template
+		ForgotPassword Template
+		CheckEmail     Template
 	}
-	UserService    *models.UserService
-	SessionService *models.SessionService
+	UserService          *models.UserService
+	SessionService       *models.SessionService
+	PasswordResetService *models.PasswordResetService
+	EmailService         *models.EmailService
 }
 
 func (c UsersController) New(w http.ResponseWriter, r *http.Request) {
@@ -112,4 +117,40 @@ func (c UsersController) CurrentUser(w http.ResponseWriter, r *http.Request) {
 	}
 	data.User = user
 	c.Templates.Profile.Execute(w, r, data)
+}
+
+func (c UsersController) ForgotPassword(w http.ResponseWriter, r *http.Request) {
+	var data struct {
+		Email string
+	}
+	data.Email = r.FormValue("email")
+	c.Templates.ForgotPassword.Execute(w, r, data)
+}
+
+func (c UsersController) ProcessForgotPassword(w http.ResponseWriter, r *http.Request) {
+	var data struct {
+		Email string
+	}
+	data.Email = r.FormValue("email")
+	pwResetService, err := c.PasswordResetService.Create(data.Email)
+	if err != nil {
+		// TODO handle other cases in the future. For instance if a user doesn't exist with that email
+		fmt.Println(err)
+		http.Error(w, "Unexpepcted error", http.StatusInternalServerError)
+		return
+	}
+
+	vals := url.Values{
+		"token": {pwResetService.Token},
+	}
+	resetURL := "http://localhost:3000/reset-password?" + vals.Encode()
+	err = c.EmailService.ForgotPassword(data.Email, resetURL)
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, "Unexpepcted error", http.StatusInternalServerError)
+		return
+	}
+
+	// Don't render the token to the user. We need them to verify their email address
+	c.Templates.CheckEmail.Execute(w, r, data)
 }
