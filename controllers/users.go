@@ -76,13 +76,13 @@ func (c UsersController) ProcessSignin(w http.ResponseWriter, r *http.Request) {
 	user, err := c.UserService.Authenticate(data.Email, data.Password)
 	if err != nil {
 		fmt.Println(err)
-		http.Error(w, "Unexpepcted error", http.StatusInternalServerError)
+		http.Error(w, "Unexpected error", http.StatusInternalServerError)
 		return
 	}
 	session, err := c.SessionService.Create(user.ID)
 	if err != nil {
 		fmt.Println(err)
-		http.Error(w, "Unexpepcted error", http.StatusInternalServerError)
+		http.Error(w, "Unexpected error", http.StatusInternalServerError)
 		return
 	}
 	setCookie(w, CookeSession, session.Token)
@@ -101,7 +101,7 @@ func (c UsersController) ProcessSignOut(w http.ResponseWriter, r *http.Request) 
 	err = c.SessionService.DeleteByToken(tokenCookie.Value)
 	if err != nil {
 		fmt.Println(err)
-		http.Error(w, "Unexpepcted error", http.StatusInternalServerError)
+		http.Error(w, "Unexpected error", http.StatusInternalServerError)
 		return
 	}
 
@@ -137,7 +137,7 @@ func (c UsersController) ProcessForgotPassword(w http.ResponseWriter, r *http.Re
 	if err != nil {
 		// TODO handle other cases in the future. For instance if a user doesn't exist with that email
 		fmt.Println(err)
-		http.Error(w, "Unexpepcted error", http.StatusInternalServerError)
+		http.Error(w, "Unexpected error", http.StatusInternalServerError)
 		return
 	}
 
@@ -148,7 +148,7 @@ func (c UsersController) ProcessForgotPassword(w http.ResponseWriter, r *http.Re
 	err = c.EmailService.ForgotPassword(data.Email, resetURL)
 	if err != nil {
 		fmt.Println(err)
-		http.Error(w, "Unexpepcted error", http.StatusInternalServerError)
+		http.Error(w, "Unexpected error", http.StatusInternalServerError)
 		return
 	}
 
@@ -176,11 +176,16 @@ func (c UsersController) ProcessResetPassword(w http.ResponseWriter, r *http.Req
 	if err != nil {
 		fmt.Println(err)
 		// TODO distinguish between invalid token and other errors
-		http.Error(w, "Unexpepcted error", http.StatusInternalServerError)
+		http.Error(w, "Unexpected error", http.StatusInternalServerError)
 		return
 	}
 
-	// TODO update the user's password
+	err = c.UserService.UpdatePassword(user.ID, data.Password)
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, "Unexpected error", http.StatusInternalServerError)
+		return
+	}
 
 	// Sign the user in now that the password has been reset
 	// Any errors from this point onwards should redirect the user to the sign in page
