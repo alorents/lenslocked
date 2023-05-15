@@ -73,6 +73,7 @@ func main() {
 	usersC.Templates.Profile = views.Must(views.ParseFS(templates.FS, "layout.gohtml", "profile.gohtml"))
 	usersC.Templates.ForgotPassword = views.Must(views.ParseFS(templates.FS, "layout.gohtml", "forgot-pw.gohtml"))
 	usersC.Templates.CheckYourEmail = views.Must(views.ParseFS(templates.FS, "layout.gohtml", "check-your-email.gohtml"))
+	usersC.Templates.ResetPassword = views.Must(views.ParseFS(templates.FS, "layout.gohtml", "reset-pw.gohtml"))
 
 	// Setup middleware
 	csrfMW := csrf.Protect([]byte(cfg.CSRF.Key), csrf.Secure(cfg.CSRF.Secure))
@@ -100,6 +101,8 @@ func main() {
 	router.Post("/signout", usersC.ProcessSignOut)
 	router.Get("/forgot-pw", usersC.ForgotPassword)
 	router.Post("/forgot-pw", usersC.ProcessForgotPassword)
+	router.Get("/reset-pw", usersC.ResetPassword)
+	router.Post("/reset-pw", usersC.ProcessResetPassword)
 	router.Route("/users/me", func(router chi.Router) {
 		router.Use(umw.RequireUser)
 		router.Get("/", usersC.CurrentUser)
