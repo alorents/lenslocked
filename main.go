@@ -41,6 +41,7 @@ func main() {
 	usersC.Templates.New = views.Must(views.ParseFS(templates.FS, "layout.gohtml", "signup.gohtml"))
 	usersC.Templates.SignIn = views.Must(views.ParseFS(templates.FS, "layout.gohtml", "signin.gohtml"))
 	usersC.Templates.Profile = views.Must(views.ParseFS(templates.FS, "layout.gohtml", "profile.gohtml"))
+	usersC.Templates.ForgotPassword = views.Must(views.ParseFS(templates.FS, "layout.gohtml", "forgot-pw.gohtml"))
 
 	// Setup middleware
 	csrfKey := "gFvi45R4fy5xNBlnEeZtQbfAVCYEIAUX" // TODO fix before deploying to production≈
@@ -67,6 +68,8 @@ func main() {
 	router.Get("/signin", usersC.SignIn)
 	router.Post("/signin", usersC.ProcessSignin)
 	router.Post("/signout", usersC.ProcessSignOut)
+	router.Get("/forgot-pw", usersC.ForgotPassword)
+	router.Post("/forgot-pw", usersC.ProcessForgotPassword)
 	router.Route("/users/me", func(router chi.Router) {
 		router.Use(umw.RequireUser)
 		router.Get("/", usersC.CurrentUser)
