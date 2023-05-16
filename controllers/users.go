@@ -9,6 +9,7 @@ import (
 	"github.com/gorilla/csrf"
 
 	"github.com/alorents/lenslocked/context"
+	"github.com/alorents/lenslocked/errors"
 	"github.com/alorents/lenslocked/models"
 )
 
@@ -38,12 +39,18 @@ func (c UsersController) New(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c UsersController) Create(w http.ResponseWriter, r *http.Request) {
-	email := r.FormValue("email")
-	password := r.FormValue("password")
-	user, err := c.UserService.Create(email, password)
+	var data struct {
+		Email    string
+		Password string
+	}
+	data.Email = r.FormValue("email")
+	data.Password = r.FormValue("password")
+	user, err := c.UserService.Create(data.Email, data.Password)
 	if err != nil {
-		fmt.Println(err)
-		http.Error(w, "Unexpected error", http.StatusInternalServerError)
+		if errors.Is(err, models.ErrEmailTaken) {
+			err = errors.Public(err, "That email address is already associated with an account.")
+		}
+		c.Templates.New.Execute(w, r, data, err)
 		return
 	}
 
