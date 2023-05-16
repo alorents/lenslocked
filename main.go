@@ -1,12 +1,17 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
+	"log"
 	"net/http"
+	"os"
+	"strconv"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/gorilla/csrf"
+	"github.com/joho/godotenv"
 
 	"github.com/alorents/lenslocked/controllers"
 	"github.com/alorents/lenslocked/models"
@@ -14,39 +19,66 @@ import (
 	"github.com/alorents/lenslocked/views"
 )
 
+type config struct {
+	PSQL models.PostgresConfig
+	SMTP models.SMTPConfig
+	CSRF struct {
+		Key    string
+		Secure bool
+	}
+	Server struct {
+		Address string
+	}
+}
+
 func main() {
-	// Setup the postgres db
-	postgresConfig := models.DefaultPostgresConfig()
-	// TODO not prod safe
-	fmt.Println(postgresConfig)
-	db, err := models.Open(postgresConfig)
+	// Load the .env file
+	cfg, err := loadEnvConfig()
 	if err != nil {
 		panic(err)
 	}
-	defer db.Close()
+	// Setup the postgres db
+	db, err := models.Open(cfg.PSQL)
+	if err != nil {
+		panic(err)
+	}
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+			panic(err)
+		}
+	}(db)
 
 	// Setup the services
-	userService := models.UserService{
+	userService := &models.UserService{
 		DB: db,
 	}
-	sessionService := models.SessionService{
+	sessionService := &models.SessionService{
 		DB: db,
 	}
+	pwResetService := &models.PasswordResetService{
+		DB: db,
+	}
+	emailService := models.NewEmailService(cfg.SMTP)
 
 	// Setup the controllers
 	usersC := controllers.UsersController{
-		UserService:    &userService,
-		SessionService: &sessionService,
+		UserService:          userService,
+		SessionService:       sessionService,
+		PasswordResetService: pwResetService,
+		EmailService:         emailService,
 	}
 	usersC.Templates.New = views.Must(views.ParseFS(templates.FS, "layout.gohtml", "signup.gohtml"))
 	usersC.Templates.SignIn = views.Must(views.ParseFS(templates.FS, "layout.gohtml", "signin.gohtml"))
 	usersC.Templates.Profile = views.Must(views.ParseFS(templates.FS, "layout.gohtml", "profile.gohtml"))
+	usersC.Templates.ForgotPassword = views.Must(views.ParseFS(templates.FS, "layout.gohtml", "forgot-password.gohtml"))
+	usersC.Templates.CheckYourEmail = views.Must(views.ParseFS(templates.FS, "layout.gohtml", "check-your-email.gohtml"))
+	usersC.Templates.ResetPassword = views.Must(views.ParseFS(templates.FS, "layout.gohtml", "reset-password.gohtml"))
 
 	// Setup middleware
-	csrfKey := "gFvi45R4fy5xNBlnEeZtQbfAVCYEIAUX" // TODO fix before deploying to production≈
-	csrfMW := csrf.Protect([]byte(csrfKey), csrf.Secure(false))
+	csrfMW := csrf.Protect([]byte(cfg.CSRF.Key), csrf.Secure(cfg.CSRF.Secure))
 	umw := controllers.UserMiddleware{
-		SessionService: &sessionService,
+		SessionService: sessionService,
 	}
 
 	// Create the router and apply middleware
@@ -67,6 +99,10 @@ func main() {
 	router.Get("/signin", usersC.SignIn)
 	router.Post("/signin", usersC.ProcessSignin)
 	router.Post("/signout", usersC.ProcessSignOut)
+	router.Get("/forgot-password", usersC.ForgotPassword)
+	router.Post("/forgot-password", usersC.ProcessForgotPassword)
+	router.Get("/reset-password", usersC.ResetPassword)
+	router.Post("/reset-password", usersC.ProcessResetPassword)
 	router.Route("/users/me", func(router chi.Router) {
 		router.Use(umw.RequireUser)
 		router.Get("/", usersC.CurrentUser)
@@ -77,6 +113,36 @@ func main() {
 	})
 
 	// Start the server
-	fmt.Println("Starting the server on :3000...")
-	http.ListenAndServe(":3000", router)
+	fmt.Printf("Starting the server on %s...\n", cfg.Server.Address)
+	err = http.ListenAndServe(cfg.Server.Address, router)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func loadEnvConfig() (config, error) {
+	var cfg config
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+	// TODO PSQL - read from env
+	cfg.PSQL = models.DefaultPostgresConfig()
+	// SMTP
+	cfg.SMTP.Host = os.Getenv("SMTP_HOST")
+	portStr := os.Getenv("SMTP_PORT")
+	port, err := strconv.Atoi(portStr)
+	if err != nil {
+		panic(err)
+	}
+	cfg.SMTP.Port = port
+	cfg.SMTP.Username = os.Getenv("SMTP_USERNAME")
+	cfg.SMTP.Password = os.Getenv("SMTP_PASSWORD")
+	// TODO CSRF - read from env
+	cfg.CSRF.Key = "gFvi45R4fy5xNBlnEeZtQbfAVCYEIAUX" // TODO fix before deploying to production
+	cfg.CSRF.Secure = false
+	// TODO the server values from env
+	cfg.Server.Address = ":3000"
+
+	return cfg, nil
 }
