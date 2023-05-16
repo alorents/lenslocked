@@ -39,11 +39,7 @@ func ParseFS(fs fs.FS, patterns ...string) (Template, error) {
 			return "", fmt.Errorf("currentUser called but not implemented")
 		},
 		"errors": func() []string {
-			return []string{
-				"Don't do that!",
-				"The email address you provided is already associated with an account.",
-				"Something went wrong.",
-			}
+			return nil
 		},
 	})
 
@@ -57,7 +53,7 @@ func ParseFS(fs fs.FS, patterns ...string) (Template, error) {
 	}, nil
 }
 
-func (t Template) Execute(w http.ResponseWriter, r *http.Request, data interface{}) {
+func (t Template) Execute(w http.ResponseWriter, r *http.Request, data interface{}, errs ...error) {
 	htmlTpl, err := t.htmlTpl.Clone()
 	if err != nil {
 		log.Printf("error cloning template: %v", err)
@@ -73,6 +69,14 @@ func (t Template) Execute(w http.ResponseWriter, r *http.Request, data interface
 			"currentUser": func() *models.User {
 				return context.User(r.Context())
 			},
+			"errors": func() []string {
+				var errorMessages []string
+				for _, err := range errs {
+					// TODO: Don't keep this long term - we will see why in a later lesson
+					errorMessages = append(errorMessages, err.Error())
+				}
+				return errorMessages
+			},
 		},
 	)
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -83,5 +87,8 @@ func (t Template) Execute(w http.ResponseWriter, r *http.Request, data interface
 		http.Error(w, "There was an error executing the template.", http.StatusInternalServerError)
 		return
 	}
-	io.Copy(w, &buf)
+	_, err = io.Copy(w, &buf)
+	if err != nil {
+		panic(err)
+	}
 }
