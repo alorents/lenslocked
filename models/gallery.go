@@ -3,6 +3,8 @@ package models
 import (
 	"database/sql"
 	"fmt"
+
+	"github.com/alorents/lenslocked/errors"
 )
 
 type Gallery struct {
@@ -29,4 +31,48 @@ func (service *GalleryService) Create(title string, userID int) (*Gallery, error
 		return nil, fmt.Errorf("create gallery: %w", err)
 	}
 	return &gallery, nil
+}
+
+func (service *GalleryService) ByID(id int) (*Gallery, error) {
+	gallery := Gallery{
+		ID: id,
+	}
+	row := service.DB.QueryRow(`
+		SELECT id, title, user_id
+		FROM galleries
+		WHERE id = $1;`, gallery.ID)
+	err := row.Scan(&gallery.ID, &gallery.Title, &gallery.UserID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrNotFound
+		}
+		return nil, fmt.Errorf("query gallery by id: %w", err)
+	}
+	return &gallery, nil
+}
+
+func (service *GalleryService) ByUserID(userID int) ([]*Gallery, error) {
+
+	rows, err := service.DB.Query(`
+		SELECT id, title
+		FROM galleries
+		WHERE user_id = $1;`, userID)
+	if err != nil {
+		return nil, fmt.Errorf("query galleries by user id: %w", err)
+	}
+	var galleries []*Gallery
+	for rows.Next() {
+		gallery := &Gallery{
+			UserID: userID,
+		}
+		err := rows.Scan(&gallery.ID, &gallery.Title)
+		if err != nil {
+			return nil, fmt.Errorf("query galleries by user: %w", err)
+		}
+		galleries = append(galleries, gallery)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("query galleries by user: %w", err)
+	}
+	return galleries, nil
 }
