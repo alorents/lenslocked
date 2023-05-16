@@ -2,6 +2,7 @@ package views
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"html/template"
 	"io"
@@ -17,6 +18,11 @@ import (
 
 type Template struct {
 	htmlTpl *template.Template
+}
+
+// publicError cab be used to determine if an error provides the Public method.
+type publicError interface {
+	Public() string
 }
 
 func Must(t Template, err error) Template {
@@ -61,6 +67,8 @@ func (t Template) Execute(w http.ResponseWriter, r *http.Request, data interface
 		return
 	}
 
+	// Call the errMessages func before the closures.
+	errMsgs := errMessages(errs...)
 	htmlTpl = htmlTpl.Funcs(
 		template.FuncMap{
 			"csrfField": func() template.HTML {
@@ -70,12 +78,8 @@ func (t Template) Execute(w http.ResponseWriter, r *http.Request, data interface
 				return context.User(r.Context())
 			},
 			"errors": func() []string {
-				var errorMessages []string
-				for _, err := range errs {
-					// TODO: Don't keep this long term - we will see why in a later lesson
-					errorMessages = append(errorMessages, err.Error())
-				}
-				return errorMessages
+				// return the pre-processed err messages inside the closure.
+				return errMsgs
 			},
 		},
 	)
@@ -91,4 +95,18 @@ func (t Template) Execute(w http.ResponseWriter, r *http.Request, data interface
 	if err != nil {
 		panic(err)
 	}
+}
+
+func errMessages(errs ...error) []string {
+	var msgs []string
+	for _, err := range errs {
+		var pubErr publicError
+		if errors.As(err, &pubErr) {
+			msgs = append(msgs, pubErr.Public())
+		} else {
+			fmt.Println(err)
+			msgs = append(msgs, "Something went wrong.")
+		}
+	}
+	return msgs
 }
