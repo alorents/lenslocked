@@ -71,9 +71,9 @@ func main() {
 	usersC.Templates.New = views.Must(views.ParseFS(templates.FS, "layout.gohtml", "signup.gohtml"))
 	usersC.Templates.SignIn = views.Must(views.ParseFS(templates.FS, "layout.gohtml", "signin.gohtml"))
 	usersC.Templates.Profile = views.Must(views.ParseFS(templates.FS, "layout.gohtml", "profile.gohtml"))
-	usersC.Templates.ForgotPassword = views.Must(views.ParseFS(templates.FS, "layout.gohtml", "forgot-pw.gohtml"))
+	usersC.Templates.ForgotPassword = views.Must(views.ParseFS(templates.FS, "layout.gohtml", "forgot-password.gohtml"))
 	usersC.Templates.CheckYourEmail = views.Must(views.ParseFS(templates.FS, "layout.gohtml", "check-your-email.gohtml"))
-	usersC.Templates.ResetPassword = views.Must(views.ParseFS(templates.FS, "layout.gohtml", "reset-pw.gohtml"))
+	usersC.Templates.ResetPassword = views.Must(views.ParseFS(templates.FS, "layout.gohtml", "reset-password.gohtml"))
 
 	// Setup middleware
 	csrfMW := csrf.Protect([]byte(cfg.CSRF.Key), csrf.Secure(cfg.CSRF.Secure))
@@ -99,10 +99,10 @@ func main() {
 	router.Get("/signin", usersC.SignIn)
 	router.Post("/signin", usersC.ProcessSignin)
 	router.Post("/signout", usersC.ProcessSignOut)
-	router.Get("/forgot-pw", usersC.ForgotPassword)
-	router.Post("/forgot-pw", usersC.ProcessForgotPassword)
-	router.Get("/reset-pw", usersC.ResetPassword)
-	router.Post("/reset-pw", usersC.ProcessResetPassword)
+	router.Get("/forgot-password", usersC.ForgotPassword)
+	router.Post("/forgot-password", usersC.ProcessForgotPassword)
+	router.Get("/reset-password", usersC.ResetPassword)
+	router.Post("/reset-password", usersC.ProcessResetPassword)
 	router.Route("/users/me", func(router chi.Router) {
 		router.Use(umw.RequireUser)
 		router.Get("/", usersC.CurrentUser)
