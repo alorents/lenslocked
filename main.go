@@ -128,6 +128,7 @@ func main() {
 			router.Get("/new", galleriesC.New)
 			router.Post("/", galleriesC.Create)
 			router.Get("/{id}/edit", galleriesC.Edit)
+			router.Post("/{id}", galleriesC.Update)
 		})
 	})
 
