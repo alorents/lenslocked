@@ -9,6 +9,7 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
+	"path"
 
 	"github.com/gorilla/csrf"
 
@@ -33,7 +34,7 @@ func Must(t Template, err error) Template {
 }
 
 func ParseFS(fs fs.FS, patterns ...string) (Template, error) {
-	htmlTpl := template.New(patterns[0])
+	htmlTpl := template.New(path.Base(patterns[0]))
 
 	htmlTpl.Funcs(template.FuncMap{
 		// returns a placeholder CSRF field - this will be replaced when the template is executed
