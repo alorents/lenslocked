@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"fmt"
+	"math/rand"
 	"net/http"
 	"strconv"
 
@@ -17,6 +18,7 @@ type GalleriesController struct {
 		New   Template
 		Edit  Template
 		Index Template
+		Show  Template
 	}
 	GalleryService *models.GalleryService
 }
@@ -130,4 +132,33 @@ func (c GalleriesController) Index(w http.ResponseWriter, r *http.Request) {
 	}
 
 	c.Templates.Index.Execute(w, r, data)
+}
+
+func (c GalleriesController) Show(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.Atoi(chi.URLParam(r, "id"))
+	if err != nil {
+		http.Error(w, "invalid id", http.StatusNotFound)
+		return
+	}
+	gallery, err := c.GalleryService.ByID(id)
+	if err != nil {
+		if errors.Is(err, models.ErrNotFound) {
+			http.Error(w, "Gallery not found", http.StatusNotFound)
+			return
+		}
+		http.Error(w, "Something went wrong", http.StatusInternalServerError)
+		return
+	}
+	var data struct {
+		ID     int
+		Title  string
+		Images []string
+	}
+	data.ID = gallery.ID
+	data.Title = gallery.Title
+	for i := 0; i < 20; i++ {
+		w, h := rand.Intn(500)+200, rand.Intn(500)+200
+		data.Images = append(data.Images, fmt.Sprintf("https://placekitten.com/%d/%d", w, h))
+	}
+	c.Templates.Show.Execute(w, r, data)
 }

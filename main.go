@@ -84,6 +84,7 @@ func main() {
 	galleriesC.Templates.New = views.Must(views.ParseFS(templates.FS, "layout.gohtml", "galleries/new.gohtml"))
 	galleriesC.Templates.Edit = views.Must(views.ParseFS(templates.FS, "layout.gohtml", "galleries/edit.gohtml"))
 	galleriesC.Templates.Index = views.Must(views.ParseFS(templates.FS, "layout.gohtml", "galleries/index.gohtml"))
+	galleriesC.Templates.Show = views.Must(views.ParseFS(templates.FS, "layout.gohtml", "galleries/show.gohtml"))
 
 	// Setup middleware
 	csrfMw := csrf.Protect(
@@ -125,6 +126,7 @@ func main() {
 
 	// Gallery routes
 	router.Route("/galleries", func(router chi.Router) {
+		router.Get("/{id}", galleriesC.Show)
 		router.Group(func(router chi.Router) {
 			router.Use(umw.RequireUser)
 			router.Get("/", galleriesC.Index)
