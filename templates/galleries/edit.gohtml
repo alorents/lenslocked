@@ -23,7 +23,6 @@
             </div>
         </form>
         <div class="py-4">
-            <h2>Dangerus actions</h2>
             <form action="/galleries/{{.ID}}/delete" method="post" onsubmit="return confirm('Do you really want to delete this gallery?');">
                 <div class="hidden">
                     {{csrfField}}
