@@ -125,6 +125,7 @@ func main() {
 		router.Group(func(router chi.Router) {
 			router.Use(umw.RequireUser)
 			router.Get("/new", galleriesC.New)
+			router.Post("/", galleriesC.Create)
 		})
 	})
 
