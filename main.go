@@ -59,6 +59,9 @@ func main() {
 	pwResetService := &models.PasswordResetService{
 		DB: db,
 	}
+	galleriesService := &models.GalleryService{
+		DB: db,
+	}
 	emailService := models.NewEmailService(cfg.SMTP)
 
 	// Setup the controllers
@@ -75,8 +78,17 @@ func main() {
 	usersC.Templates.CheckYourEmail = views.Must(views.ParseFS(templates.FS, "layout.gohtml", "check-your-email.gohtml"))
 	usersC.Templates.ResetPassword = views.Must(views.ParseFS(templates.FS, "layout.gohtml", "reset-password.gohtml"))
 
+	galleriesC := controllers.GalleriesController{
+		GalleryService: galleriesService,
+	}
+	galleriesC.Templates.New = views.Must(views.ParseFS(templates.FS, "layout.gohtml", "galleries/new.gohtml"))
+
 	// Setup middleware
-	csrfMW := csrf.Protect([]byte(cfg.CSRF.Key), csrf.Secure(cfg.CSRF.Secure))
+	csrfMw := csrf.Protect(
+		[]byte(cfg.CSRF.Key),
+		csrf.Secure(cfg.CSRF.Secure),
+		csrf.Path("/"),
+	)
 	umw := controllers.UserMiddleware{
 		SessionService: sessionService,
 	}
@@ -84,7 +96,7 @@ func main() {
 	// Create the router and apply middleware
 	router := chi.NewRouter()
 	router.Use(middleware.Logger)
-	router.Use(csrfMW)
+	router.Use(csrfMw)
 	router.Use(umw.SetUser)
 
 	// Define the routes
@@ -106,6 +118,14 @@ func main() {
 	router.Route("/users/me", func(router chi.Router) {
 		router.Use(umw.RequireUser)
 		router.Get("/", usersC.CurrentUser)
+	})
+
+	// Gallery routes
+	router.Route("/galleries", func(router chi.Router) {
+		router.Group(func(router chi.Router) {
+			router.Use(umw.RequireUser)
+			router.Get("/new", galleriesC.New)
+		})
 	})
 
 	router.NotFound(func(w http.ResponseWriter, r *http.Request) {
