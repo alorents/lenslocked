@@ -82,6 +82,7 @@ func main() {
 		GalleryService: galleriesService,
 	}
 	galleriesC.Templates.New = views.Must(views.ParseFS(templates.FS, "layout.gohtml", "galleries/new.gohtml"))
+	galleriesC.Templates.Edit = views.Must(views.ParseFS(templates.FS, "layout.gohtml", "galleries/edit.gohtml"))
 
 	// Setup middleware
 	csrfMw := csrf.Protect(
@@ -126,6 +127,7 @@ func main() {
 			router.Use(umw.RequireUser)
 			router.Get("/new", galleriesC.New)
 			router.Post("/", galleriesC.Create)
+			router.Get("/{id}/edit", galleriesC.Edit)
 		})
 	})
 
