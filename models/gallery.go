@@ -16,7 +16,9 @@ type Gallery struct {
 }
 
 type Image struct {
-	Path string
+	GalleryID int
+	Filename  string
+	Path      string
 }
 
 type GalleryService struct {
@@ -127,7 +129,9 @@ func (service *GalleryService) Images(galleryID int) ([]Image, error) {
 	for _, file := range allFiles {
 		if hasExtension(file, service.extensions()) {
 			images = append(images, Image{
-				Path: file,
+				GalleryID: galleryID,
+				Filename:  filepath.Base(file),
+				Path:      file,
 			})
 		}
 	}
