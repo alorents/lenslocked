@@ -1,5 +1,11 @@
 # lenslocked
 
+# Running the application locally
+
+ensure `.env` file is configured and upto date. See `.env.template` in the base directory
+
+`go run main.go` from the base directory
+
 # Connecting to postgres
 
 ensure postgres container is running
