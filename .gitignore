@@ -6,6 +6,12 @@ lenslocked
 *.so
 *.dylib
 
+# Our specific binary
+lenslocked
+
+# Images directory during development
+images/
+
 # Test binary, built with `go test -c`
 *.test
 
