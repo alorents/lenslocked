@@ -136,6 +136,7 @@ func main() {
 			router.Get("/{id}/edit", galleriesC.Edit)
 			router.Post("/{id}", galleriesC.Update)
 			router.Post("/{id}/delete", galleriesC.Delete)
+			router.Post("/{id}/images/{filename}/delete", galleriesC.DeleteImage)
 		})
 	})
 

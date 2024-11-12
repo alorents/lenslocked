@@ -59,8 +59,6 @@ func (es *EmailService) Send(email Email) error {
 	case email.HTML != "":
 		msg.SetBody("text/html", email.HTML)
 	}
-	return es.dialer.DialAndSend(msg)
-
 	err := es.dialer.DialAndSend(msg)
 	if err != nil {
 		return fmt.Errorf("send: %w", err)

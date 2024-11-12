@@ -244,3 +244,53 @@ func (c GalleriesController) Image(w http.ResponseWriter, r *http.Request) {
 	}
 	http.ServeFile(w, r, image.Path)
 }
+
+func (c GalleriesController) DeleteImage(w http.ResponseWriter, r *http.Request) {
+	filename := chi.URLParam(r, "filename")
+	gallery, err := c.galleryByID(w, r, userMustOwnGallery)
+	if err != nil {
+		return
+	}
+	err = c.GalleryService.DeleteImage(gallery.ID, filename)
+	if err != nil {
+		http.Error(w, "Something went wrong", http.StatusInternalServerError)
+		return
+	}
+	editPath := fmt.Sprintf("/galleries/%d/edit", gallery.ID)
+	http.Redirect(w, r, editPath, http.StatusFound)
+}
+
+type galleryOpt func(http.ResponseWriter, *http.Request, *models.Gallery) error
+
+func (c GalleriesController) galleryByID(w http.ResponseWriter, r *http.Request, opts ...galleryOpt) (*models.Gallery, error) {
+	id, err := strconv.Atoi(chi.URLParam(r, "id"))
+	if err != nil {
+		http.Error(w, "Invalid ID", http.StatusNotFound)
+		return nil, err
+	}
+	gallery, err := c.GalleryService.ByID(id)
+	if err != nil {
+		if errors.Is(err, models.ErrNotFound) {
+			http.Error(w, "Gallery not found", http.StatusNotFound)
+			return nil, err
+		}
+		http.Error(w, "Something went wrong", http.StatusInternalServerError)
+		return nil, err
+	}
+	for _, opt := range opts {
+		err = opt(w, r, gallery)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return gallery, nil
+}
+
+func userMustOwnGallery(w http.ResponseWriter, r *http.Request, gallery *models.Gallery) error {
+	user := context.User(r.Context())
+	if gallery.UserID != user.ID {
+		http.Error(w, "You are not authorized to edit this gallery", http.StatusForbidden)
+		return fmt.Errorf("user does not hav access to this gallery")
+	}
+	return nil
+}
