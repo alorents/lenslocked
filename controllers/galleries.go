@@ -227,7 +227,7 @@ func (c GalleriesController) Delete(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c GalleriesController) Image(w http.ResponseWriter, r *http.Request) {
-	filename := c.filename(w, r)
+	filename := c.filename(r)
 	galleryID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
 		http.Error(w, "Invalid ID", http.StatusNotFound)
@@ -247,7 +247,7 @@ func (c GalleriesController) Image(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c GalleriesController) DeleteImage(w http.ResponseWriter, r *http.Request) {
-	filename := c.filename(w, r)
+	filename := c.filename(r)
 	gallery, err := c.galleryByID(w, r, userMustOwnGallery)
 	if err != nil {
 		return
@@ -296,7 +296,7 @@ func userMustOwnGallery(w http.ResponseWriter, r *http.Request, gallery *models.
 	return nil
 }
 
-func (c GalleriesController) filename(w http.ResponseWriter, r *http.Request) string {
+func (c GalleriesController) filename(r *http.Request) string {
 	filename := chi.URLParam(r, "filename")
 	filename = filepath.Base(filename)
 	return filename

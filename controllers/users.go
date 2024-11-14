@@ -94,7 +94,6 @@ func (c UsersController) ProcessSignin(w http.ResponseWriter, r *http.Request) {
 	}
 	setCookie(w, CookeSession, session.Token)
 	http.Redirect(w, r, "/users/me", http.StatusFound)
-	return
 }
 
 func (c UsersController) ProcessSignOut(w http.ResponseWriter, r *http.Request) {
@@ -114,7 +113,6 @@ func (c UsersController) ProcessSignOut(w http.ResponseWriter, r *http.Request) 
 
 	deleteCookie(w, CookeSession)
 	http.Redirect(w, r, "/signin", http.StatusFound)
-	return
 }
 
 func (c UsersController) CurrentUser(w http.ResponseWriter, r *http.Request) {
