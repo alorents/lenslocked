@@ -43,7 +43,7 @@ func checkContentType(r io.ReadSeeker, allowedTypes []string) error {
 	return FileError{Issue: fmt.Sprintf("content type: %s is not allowed", contentType)}
 }
 
-func checkExtenstion(filename string, allowedExtensions []string) error {
+func checkExtension(filename string, allowedExtensions []string) error {
 	if hasExtension(filename, allowedExtensions) {
 		return nil
 	}
