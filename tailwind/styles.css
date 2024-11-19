@@ -2,10 +2,4 @@
 @tailwind components;
 @tailwind utilities;
 
-.test {
-  font-size: 10rem;
-}
-
-.another-test {
-  font-size: 2rem;
-}
+/* Add custom CSS here if you need it. */

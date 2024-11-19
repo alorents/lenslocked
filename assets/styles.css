@@ -1010,13 +1010,7 @@ video {
   box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
 }
 
-.test {
-  font-size: 10rem;
-}
-
-.another-test {
-  font-size: 2rem;
-}
+/* Add custom CSS here if you need it. */
 
 .hover\:bg-blue-200:hover {
   --tw-bg-opacity: 1;
