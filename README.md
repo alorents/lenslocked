@@ -1,4 +1,5 @@
 # lenslocked
+This follows a webdev course by Jon Calhoun found at https://courses.calhoun.io/courses/cor_wdv2
 
 # Running the application locally
 
@@ -30,3 +31,13 @@ downgrade run migrations with goose `goose postgres $GOOSE_POSTGRES_CFG down`
 <br>
 status run migrations with goose `goose postgres $GOOSE_POSTGRES_CFG status`
 <br>
+
+# Tailwind
+Installation
+`npm install -D tailwindcss
+npx tailwindcss init`
+
+Build
+From the directory containing tailwind.config.js
+input and output css files are personal preference
+`npx tailwindcss -i ./styles.css -o ../assets/styles.css --watch`
