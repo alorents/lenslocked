@@ -127,6 +127,7 @@ func main() {
 	// Gallery routes
 	router.Route("/galleries", func(router chi.Router) {
 		router.Get("/{id}", galleriesC.Show)
+		router.Get("/{id}/images/{filename}", galleriesC.Image)
 		router.Group(func(router chi.Router) {
 			router.Use(umw.RequireUser)
 			router.Get("/", galleriesC.Index)
@@ -135,6 +136,8 @@ func main() {
 			router.Get("/{id}/edit", galleriesC.Edit)
 			router.Post("/{id}", galleriesC.Update)
 			router.Post("/{id}/delete", galleriesC.Delete)
+			router.Post("/{id}/images", galleriesC.UploadImage)
+			router.Post("/{id}/images/{filename}/delete", galleriesC.DeleteImage)
 		})
 	})
 

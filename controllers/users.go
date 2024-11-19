@@ -62,7 +62,7 @@ func (c UsersController) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	setCookie(w, CookeSession, session.Token)
-	http.Redirect(w, r, "/users/me", http.StatusFound)
+	http.Redirect(w, r, "/galleries", http.StatusFound)
 }
 
 func (c UsersController) SignIn(w http.ResponseWriter, r *http.Request) {
@@ -93,8 +93,7 @@ func (c UsersController) ProcessSignin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	setCookie(w, CookeSession, session.Token)
-	http.Redirect(w, r, "/users/me", http.StatusFound)
-	return
+	http.Redirect(w, r, "/galleries", http.StatusFound)
 }
 
 func (c UsersController) ProcessSignOut(w http.ResponseWriter, r *http.Request) {
@@ -114,7 +113,6 @@ func (c UsersController) ProcessSignOut(w http.ResponseWriter, r *http.Request) 
 
 	deleteCookie(w, CookeSession)
 	http.Redirect(w, r, "/signin", http.StatusFound)
-	return
 }
 
 func (c UsersController) CurrentUser(w http.ResponseWriter, r *http.Request) {
@@ -203,5 +201,5 @@ func (c UsersController) ProcessResetPassword(w http.ResponseWriter, r *http.Req
 		return
 	}
 	setCookie(w, CookeSession, session.Token)
-	http.Redirect(w, r, "/users/me", http.StatusFound)
+	http.Redirect(w, r, "/galleries", http.StatusFound)
 }
