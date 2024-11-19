@@ -4,7 +4,9 @@
 
 ensure `.env` file is configured and upto date. See `.env.template` in the base directory
 
-`go run main.go` from the base directory
+`go run cmd/server/server.go` from the base directory
+
+alternatively run `modd` from the base directory for a live-reload server on file system changes
 
 # Connecting to postgres
 
