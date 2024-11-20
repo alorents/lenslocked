@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
@@ -14,6 +13,7 @@ import (
 	"github.com/joho/godotenv"
 
 	"github.com/alorents/lenslocked/controllers"
+	"github.com/alorents/lenslocked/migrations"
 	"github.com/alorents/lenslocked/models"
 	"github.com/alorents/lenslocked/templates"
 	"github.com/alorents/lenslocked/views"
@@ -32,22 +32,35 @@ type config struct {
 }
 
 func main() {
-	// Load the .env file
 	cfg, err := loadEnvConfig()
 	if err != nil {
 		panic(err)
 	}
-	// Setup the postgres db
-	db, err := models.Open(cfg.PSQL)
+	err = run(cfg)
 	if err != nil {
 		panic(err)
 	}
-	defer func(db *sql.DB) {
-		err := db.Close()
-		if err != nil {
-			panic(err)
-		}
-	}(db)
+}
+
+func run(cfg config) error {
+	// Load the .env file
+	cfg, err := loadEnvConfig()
+	if err != nil {
+		return err
+	}
+
+	// Setup the postgres db
+	db, err := models.Open(cfg.PSQL)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	// run migrations
+	err = models.MigrateFS(db, migrations.FS, "")
+	if err != nil {
+		panic(err)
+	}
 
 	// Setup the services
 	userService := &models.UserService{
@@ -141,16 +154,16 @@ func main() {
 		})
 	})
 
+	assetsHandler := http.FileServer(http.Dir("assets"))
+	router.Get("/assets/*", http.StripPrefix("/assets", assetsHandler).ServeHTTP)
+
 	router.NotFound(func(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Page not found", http.StatusNotFound)
 	})
 
 	// Start the server
 	fmt.Printf("Starting the server on %s...\n", cfg.Server.Address)
-	err = http.ListenAndServe(cfg.Server.Address, router)
-	if err != nil {
-		panic(err)
-	}
+	return http.ListenAndServe(cfg.Server.Address, router)
 }
 
 func loadEnvConfig() (config, error) {
