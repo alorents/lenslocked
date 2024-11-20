@@ -41,3 +41,6 @@ Build \
 From the directory containing tailwind.config.js \
 input and output css files are personal preference \
 `npx tailwindcss -i ./styles.css -o ../assets/styles.css --watch`
+
+# Production
+`docker-compose -f docker-compose.yml -f docker-compose.production.yml up --build`
