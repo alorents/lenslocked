@@ -26,3 +26,6 @@ images/
 
 # IDE files
 __debug*
+
+# Node
+node_modules/

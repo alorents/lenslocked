@@ -7,8 +7,6 @@ import (
 
 	_ "github.com/jackc/pgx/v4/stdlib"
 	"github.com/pressly/goose/v3"
-
-	"github.com/alorents/lenslocked/migrations"
 )
 
 func DefaultPostgresConfig() PostgresConfig {
@@ -28,11 +26,6 @@ func Open(config PostgresConfig) (*sql.DB, error) {
 	db, err := sql.Open("pgx", config.String())
 	if err != nil {
 		return nil, fmt.Errorf("error opening database: %w", err)
-	}
-	// run migrations
-	err = MigrateFS(db, migrations.FS, "")
-	if err != nil {
-		panic(err)
 	}
 
 	return db, db.Ping()
