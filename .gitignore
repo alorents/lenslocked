@@ -26,6 +26,7 @@ images/
 
 # IDE files
 __debug*
+.vscode/
 
 # Node
 node_modules/
